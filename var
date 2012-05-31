@@ -1,0 +1,16 @@
+Variables:
+- Global variables (also environment variables) - 
+- Local variables - can be nested
+
+If a variable is set and it doesn't already exist in the current scope, is a new
+variable created in the current scope or do we search for an existing variable in
+an outer scope? Or create a new global one?
+
+Options:
+- Have separate commands or flags to create and set variables (analogous to Inferno's = and :=)
+- A variable set always introduces a new local variable
+-- This means there's no way to set a global?
+- A variable set always introduces a new global variable
+-- Can cause unexpected behaviors (see JavaScript)
+- A set manipulates a variable in an outer scope if one exists, otherwise a new local variable is created
+-- This seems inefficient because it means we have to check each outer scope before setting a global or creating a local
