@@ -5,6 +5,17 @@ import (
 )
 
 type environment struct {
+	vars []map[string]val
+}
+
+func (e *environment) lookup(name string) val {
+	i := len(e.vars) - 1
+	for i >= 0 {
+		if v, ok := e.vars[i][name]; ok {
+			return v
+		}
+	}
+	return nilVal{}
 }
 
 func (e *environment) lookupFunc(name string) *function {

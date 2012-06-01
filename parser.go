@@ -116,7 +116,12 @@ func (p *parser) parseCommand() *command {
 	p.lex()
 	var args []val
 	for p.tok != lfTok {
-		args = append(args, word(p.lit))
+		switch p.tok {
+		case atomTok:
+			args = append(args, word(p.lit))
+		case varTok:
+			args = append(args, localVar(p.lit))
+		}
 		p.lex()
 	}
 	p.lex()

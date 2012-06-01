@@ -13,6 +13,22 @@ type val interface {
 	String() string
 }
 
+type nilVal struct{}
+
+func (v nilVal) eval(env *environment) val {
+	return v
+}
+
+func (v nilVal) String() string { return "" }
+
+type localVar string
+
+func (v localVar) eval(env *environment) val { return env.lookup(string(v[1:])) }
+
+func (v localVar) String() string {
+	panic("shouldn't be called")
+}
+
 type word string
 
 func (w word) exec(args []val, stdin io.Reader, stdout, stderr io.Writer, env *environment) int {
@@ -23,7 +39,7 @@ func (w word) exec(args []val, stdin io.Reader, stdout, stderr io.Writer, env *e
 	}
 	strArgs := make([]string, len(args))
 	for i, arg := range args {
-		strArgs[i] = arg.String()
+		strArgs[i] = arg.eval(env).String()
 	}
 	cmd := exec.Command(path, strArgs...)
 	cmd.Stdin = stdin
