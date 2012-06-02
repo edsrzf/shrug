@@ -43,6 +43,7 @@ func newParser(src string) *parser {
 		p.ch = eof
 	}
 	p.offset = 0
+	p.lex()
 	return &p
 }
 
@@ -98,8 +99,8 @@ func (p *parser) lex() {
 		p.tok = lfTok
 	default:
 		if special(p.ch) {
-			p.next()
 			p.tok = token(p.ch)
+			p.next()
 			break
 		}
 		p.readAtom()
@@ -108,14 +109,26 @@ func (p *parser) lex() {
 	p.lit = string(p.src[offset:p.offset])
 }
 
+func (p *parser) parseLambda() lambda {
+	p.lex()
+	cmds := p.parseCommandList()
+	return lambda{cmds}
+}
+
 func (p *parser) parseCommand() *command {
-	if p.tok != atomTok {
-		p.errorf("expected atom, got %d\n", p.tok)
+	var c cmd
+	switch p.tok {
+	case atomTok:
+		c = word(p.lit)
+	case '{':
+		c = p.parseLambda()
+	default:
+		p.errorf("Expected { or word, got %v\n", p.tok)
 	}
-	w := word(p.lit)
+
 	p.lex()
 	var args []val
-	for p.tok != lfTok {
+	for p.tok != lfTok && p.tok != eofTok {
 		switch p.tok {
 		case atomTok:
 			args = append(args, word(p.lit))
@@ -125,11 +138,10 @@ func (p *parser) parseCommand() *command {
 		p.lex()
 	}
 	p.lex()
-	return &command{w, args}
+	return &command{c, args}
 }
 
 func (p *parser) parseCommandList() []*command {
-	p.lex()
 	commands := make([]*command, 0, 1)
 	for p.tok != eofTok {
 		commands = append(commands, p.parseCommand())

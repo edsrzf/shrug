@@ -59,18 +59,24 @@ func (c builtinCmd) String() string {
 	return ""
 }
 
-type function struct {
+type lambda struct {
+	cmds []*command
 }
 
-func (f *function) call(ctx *context, args ...val) int {
-	return 0
+func (l lambda) exec(args []val, ctx *context) int {
+	ret := 0
+	for _, cmd := range l.cmds {
+		ret = cmd.exec(ctx)
+	}
+	return ret
 }
 
-func (f *function) eval(ctx *context) val {
-	return nilVal{}
+func (l lambda) eval(ctx *context) val {
+	return l
 }
 
-func (f *function) String() string {
+func (l lambda) String() string {
+	// TODO
 	return ""
 }
 
