@@ -23,7 +23,7 @@ func (v nilVal) String() string { return "" }
 
 type localVar string
 
-func (v localVar) eval(env *environment) val { return env.lookup(string(v[1:])) }
+func (v localVar) eval(env *environment) val { return env.lookupLocal(string(v[1:])) }
 
 func (v localVar) String() string {
 	panic("shouldn't be called")
@@ -32,6 +32,9 @@ func (v localVar) String() string {
 type word string
 
 func (w word) exec(args []val, stdin io.Reader, stdout, stderr io.Writer, env *environment) int {
+	if f := env.lookupFunc(string(w)); f != nil {
+		return f.exec(args, stdin, stdout, stderr, env)
+	}
 	path, err := exec.LookPath(string(w))
 	if err != nil {
 		fmt.Printf("%s: command not found\n", w)
