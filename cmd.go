@@ -4,25 +4,27 @@ import (
 	"io"
 )
 
-type environment struct {
+type context struct {
 	vars []map[string]val
+	stdin io.Reader
+	stdout, stderr io.Writer
 }
 
-func newEnv() *environment {
-	var env environment
+func newCtx() *context {
+	var ctx context
 	top := map[string]val{}
 	for name, f := range builtins {
 		top["fn-" + name] = f
 	}
-	env.vars = []map[string]val{top}
-	return &env
+	ctx.vars = []map[string]val{top}
+	return &ctx
 }
 
-func (e *environment) set(name string, v val) {
+func (e *context) set(name string, v val) {
 	e.vars[len(e.vars)-1][name] = v
 }
 
-func (e *environment) lookupLocal(name string) val {
+func (e *context) lookupLocal(name string) val {
 	for i := len(e.vars) - 1; i >= 0; i-- {
 		if v, ok := e.vars[i][name]; ok {
 			return v
@@ -31,7 +33,7 @@ func (e *environment) lookupLocal(name string) val {
 	return nilVal{}
 }
 
-func (e *environment) lookupFunc(name string) cmd {
+func (e *context) lookupFunc(name string) cmd {
 	name = "fn-" + name
 	for i := len(e.vars) - 1; i >= 0; i-- {
 		if v, ok := e.vars[i][name]; ok {
@@ -43,13 +45,13 @@ func (e *environment) lookupFunc(name string) cmd {
 	return nil
 }
 
-type builtinCmd func(args []val, stdin io.Reader, stdout, stderr io.Writer, env *environment) int
+type builtinCmd func(args []val, ctx *context) int
 
-func (c builtinCmd) exec(args []val, stdin io.Reader, stdout, stderr io.Writer, env *environment) int {
-	return c(args, stdin, stdout, stderr, env)
+func (c builtinCmd) exec(args []val, ctx *context) int {
+	return c(args, ctx)
 }
 
-func (c builtinCmd) eval(env *environment) val {
+func (c builtinCmd) eval(ctx *context) val {
 	return nilVal{}
 }
 
@@ -60,11 +62,11 @@ func (c builtinCmd) String() string {
 type function struct {
 }
 
-func (f *function) call(env *environment, args ...val) int {
+func (f *function) call(ctx *context, args ...val) int {
 	return 0
 }
 
-func (f *function) eval(env *environment) val {
+func (f *function) eval(ctx *context) val {
 	return nilVal{}
 }
 
@@ -77,10 +79,10 @@ type command struct {
 	args []val
 }
 
-func (c *command) exec(stdin io.Reader, stdout, stderr io.Writer, env *environment) int {
-	return c.cmd.exec(c.args, stdin, stdout, stderr, env)
+func (c *command) exec(ctx *context) int {
+	return c.cmd.exec(c.args, ctx)
 }
 
 type cmd interface {
-	exec(args []val, stdin io.Reader, stdout, stderr io.Writer, env *environment) int
+	exec(args []val, ctx *context) int
 }

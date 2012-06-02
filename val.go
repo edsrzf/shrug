@@ -2,20 +2,19 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"math/big"
 	"os/exec"
 	"syscall"
 )
 
 type val interface {
-	eval(env *environment) val
+	eval(ctx *context) val
 	String() string
 }
 
 type nilVal struct{}
 
-func (v nilVal) eval(env *environment) val {
+func (v nilVal) eval(ctx *context) val {
 	return v
 }
 
@@ -23,7 +22,7 @@ func (v nilVal) String() string { return "" }
 
 type localVar string
 
-func (v localVar) eval(env *environment) val { return env.lookupLocal(string(v[1:])) }
+func (v localVar) eval(ctx *context) val { return ctx.lookupLocal(string(v[1:])) }
 
 func (v localVar) String() string {
 	panic("shouldn't be called")
@@ -31,9 +30,9 @@ func (v localVar) String() string {
 
 type word string
 
-func (w word) exec(args []val, stdin io.Reader, stdout, stderr io.Writer, env *environment) int {
-	if f := env.lookupFunc(string(w)); f != nil {
-		return f.exec(args, stdin, stdout, stderr, env)
+func (w word) exec(args []val, ctx *context) int {
+	if f := ctx.lookupFunc(string(w)); f != nil {
+		return f.exec(args, ctx)
 	}
 	path, err := exec.LookPath(string(w))
 	if err != nil {
@@ -42,12 +41,12 @@ func (w word) exec(args []val, stdin io.Reader, stdout, stderr io.Writer, env *e
 	}
 	strArgs := make([]string, len(args))
 	for i, arg := range args {
-		strArgs[i] = arg.eval(env).String()
+		strArgs[i] = arg.eval(ctx).String()
 	}
 	cmd := exec.Command(path, strArgs...)
-	cmd.Stdin = stdin
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
+	cmd.Stdin = ctx.stdin
+	cmd.Stdout = ctx.stdout
+	cmd.Stderr = ctx.stderr
 	err = cmd.Run()
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
@@ -59,7 +58,7 @@ func (w word) exec(args []val, stdin io.Reader, stdout, stderr io.Writer, env *e
 	return 0
 }
 
-func (w word) eval(env *environment) val { return w }
+func (w word) eval(ctx *context) val { return w }
 
 func (w word) String() string { return string(w) }
 

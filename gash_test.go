@@ -20,7 +20,9 @@ func TestCommand(t *testing.T) {
 		buf.Reset()
 		p := newParser(test.cmd + "\n")
 		cmds := p.parseCommandList()
-		cmds[0].exec(nil, &buf, nil, newEnv())
+		ctx := newCtx()
+		ctx.stdout = &buf
+		cmds[0].exec(ctx)
 		if output := buf.String(); output != test.output {
 			t.Errorf("expected\n%q\ngot\n%q", test.output, output)
 		}
