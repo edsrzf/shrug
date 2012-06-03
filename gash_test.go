@@ -13,7 +13,9 @@ var basicTests = []struct{
 	{"echo hi; echo hi", "hi\nhi\n"},
 	{"echo $hi", "\n"},
 	{"set var hi", ""},
+	{"set var hi; echo $var", "hi\n"},
 	{"{echo hi}", "hi\n"},
+	{"{\necho hi}", "hi\n"},
 }
 
 func TestCommand(t *testing.T) {
