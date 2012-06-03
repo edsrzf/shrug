@@ -10,6 +10,7 @@ var basicTests = []struct{
 	output string
 }{
 	{"echo hi", "hi\n"},
+	{"echo hi; echo hi", "hi\nhi\n"},
 	{"echo $hi", "\n"},
 	{"set var hi", ""},
 	{"{echo hi}", "hi\n"},
@@ -23,7 +24,9 @@ func TestCommand(t *testing.T) {
 		cmds := p.parseCommandList()
 		ctx := newCtx()
 		ctx.stdout = &buf
-		cmds[0].exec(ctx)
+		for _, cmd := range cmds {
+			cmd.exec(ctx)
+		}
 		if output := buf.String(); output != test.output {
 			t.Errorf("expected\n%q\ngot\n%q", test.output, output)
 		}

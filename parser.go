@@ -9,7 +9,7 @@ type token int
 
 const (
 	eofTok token = iota
-	lfTok
+	semiTok
 	atomTok
 	varTok
 	countTok
@@ -30,6 +30,7 @@ type parser struct {
 	mode lexMode
 	src []byte
 	offset int
+	insertSemi bool
 }
 
 const eof = -1
@@ -62,7 +63,7 @@ func (p *parser) next() {
 }
 
 func (p *parser) skipSpace() {
-	for p.ch == ' ' || p.ch == '\t' {
+	for p.ch == ' ' || p.ch == '\t' || !p.insertSemi && p.ch == '\n' {
 		p.next()
 	}
 }
@@ -83,28 +84,41 @@ func (p *parser) lex() {
 	offset := p.offset
 	switch p.ch {
 	case eof:
+		if p.insertSemi {
+			p.tok = semiTok
+			p.insertSemi = false
+			break
+		}
 		p.tok = eofTok
 	case '$':
 		p.next()
 		p.readAtom()
 		p.tok = varTok
+		p.insertSemi = true
 	case '#':
 		p.next()
 		for p.ch != '\n' {
 			p.next()
 		}
 		fallthrough
-	case '\n':
+	case '\n', ';':
 		p.next()
-		p.tok = lfTok
+		p.tok = semiTok
+		p.insertSemi = false
 	default:
 		if special(p.ch) {
 			p.tok = token(p.ch)
+			if p.ch == '{' {
+				p.insertSemi = false
+			} else {
+				p.insertSemi = true
+			}
 			p.next()
 			break
 		}
 		p.readAtom()
 		p.tok = atomTok
+		p.insertSemi = true
 	}
 	p.lit = string(p.src[offset:p.offset])
 }
@@ -128,7 +142,7 @@ func (p *parser) parseCommand() *command {
 
 	p.lex()
 	var args []val
-	for p.tok != lfTok && p.tok != eofTok {
+	for p.tok != semiTok && p.tok != eofTok {
 		switch p.tok {
 		case atomTok:
 			args = append(args, word(p.lit))
