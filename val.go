@@ -51,7 +51,7 @@ func (w word) exec(args []val, ctx *context) int {
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
 			// TODO: make portable to Plan 9
-			return ee.Sys().(*syscall.WaitStatus).ExitStatus()
+			return ee.Sys().(syscall.WaitStatus).ExitStatus()
 		}
 		panic(err)
 	}

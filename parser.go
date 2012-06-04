@@ -126,6 +126,10 @@ func (p *parser) lex() {
 func (p *parser) parseLambda() lambda {
 	p.lex()
 	cmds := p.parseCommandList()
+	if p.tok != '}' {
+		p.errorf("Expected '}', got %q\n", p.tok)
+	}
+	p.lex()
 	return lambda{cmds}
 }
 
@@ -134,30 +138,42 @@ func (p *parser) parseCommand() *command {
 	switch p.tok {
 	case atomTok:
 		c = word(p.lit)
+		p.lex()
 	case '{':
 		c = p.parseLambda()
 	default:
-		p.errorf("Expected { or word, got %v\n", p.tok)
+		p.errorf("Expected '{' or word, got %q\n", p.tok)
 	}
 
-	p.lex()
 	var args []val
-	for p.tok != semiTok && p.tok != eofTok {
+	loop:
+	for {
 		switch p.tok {
 		case atomTok:
 			args = append(args, word(p.lit))
+			p.lex()
 		case varTok:
 			args = append(args, localVar(p.lit))
+			p.lex()
+		case '{':
+			 args = append(args, p.parseLambda())
+		default:
+			 break loop
 		}
-		p.lex()
 	}
-	p.lex()
+	if p.tok != '}' {
+		if p.tok == semiTok {
+			p.lex()
+		} else {
+			p.errorf("Expected ';', got %q\n", p.tok)
+		}
+	}
 	return &command{c, args}
 }
 
 func (p *parser) parseCommandList() []*command {
 	commands := make([]*command, 0, 1)
-	for p.tok != eofTok {
+	for p.tok != eofTok && p.tok != '}' {
 		commands = append(commands, p.parseCommand())
 	}
 	return commands
