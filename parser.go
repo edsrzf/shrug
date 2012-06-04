@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
 )
@@ -50,6 +51,27 @@ func newParser(src string) *parser {
 
 func (p *parser) errorf(f string, args ...interface{}) {
 	panic(fmt.Sprintf(f, args...))
+}
+
+func (p *parser) expect(toks ...token) {
+	for _, tok := range toks {
+		if p.tok == tok {
+			p.lex()
+			return
+		}
+	}
+	if len(toks) == 1 {
+		p.errorf("expected %q, got %q\n", toks[0], p.tok)
+	} else {
+		var buf bytes.Buffer
+		for _, tok := range toks[:len(toks)-1] {
+			buf.WriteString(string(tok))
+			buf.WriteString(", ")
+		}
+		buf.WriteString(" or ")
+		buf.WriteString(string(toks[len(toks)-1]))
+		p.errorf("expected %v, got %q\n", buf, p.tok)
+	}
 }
 
 func (p *parser) next() {
@@ -126,10 +148,7 @@ func (p *parser) lex() {
 func (p *parser) parseLambda() lambda {
 	p.lex()
 	cmds := p.parseCommandList()
-	if p.tok != '}' {
-		p.errorf("Expected '}', got %q\n", p.tok)
-	}
-	p.lex()
+	p.expect('}')
 	return lambda{cmds}
 }
 
@@ -142,7 +161,7 @@ func (p *parser) parseCommand() *command {
 	case '{':
 		c = p.parseLambda()
 	default:
-		p.errorf("Expected '{' or word, got %q\n", p.tok)
+		p.expect('{', atomTok)
 	}
 
 	var args []val
@@ -162,11 +181,7 @@ func (p *parser) parseCommand() *command {
 		}
 	}
 	if p.tok != '}' {
-		if p.tok == semiTok {
-			p.lex()
-		} else {
-			p.errorf("Expected ';', got %q\n", p.tok)
-		}
+		p.expect(semiTok)
 	}
 	return &command{c, args}
 }
