@@ -20,6 +20,8 @@ var basicTests = []struct{
 	{"if {test 0} {echo true}", "true\n"},
 	{"if {test} {echo true} {echo false}", "false\n"},
 	{"if {test} {echo true}", ""},
+	{"for var {echo hi}", ""},
+	{"for letter a b c {echo $letter}", "a\nb\nc\n"},
 }
 
 func TestCommand(t *testing.T) {
