@@ -47,10 +47,10 @@ func (e *context) lookupFunc(name string) cmd {
 
 type builtinCmd struct {
 	name string
-	f    func(args []val, ctx *context) int
+	f    func(args []val, ctx *context) val
 }
 
-func (c *builtinCmd) exec(args []val, ctx *context) int {
+func (c *builtinCmd) exec(args []val, ctx *context) val {
 	return c.f(args, ctx)
 }
 
@@ -58,16 +58,16 @@ func (c *builtinCmd) eval(ctx *context) val {
 	return c
 }
 
-func (c *builtinCmd) String() string {
-	return "$&" + c.name
-}
+func (c *builtinCmd) String() string { return "$&" + c.name }
+
+func (c *builtinCmd) bool() bool { return true }
 
 type lambda struct {
 	cmds []*completeCmd
 }
 
-func (l lambda) exec(args []val, ctx *context) int {
-	ret := 0
+func (l lambda) exec(args []val, ctx *context) val {
+	var ret val = nilVal{}
 	for _, cmd := range l.cmds {
 		ret = cmd.exec(nil, ctx)
 	}
@@ -83,6 +83,8 @@ func (l lambda) String() string {
 	return ""
 }
 
+func (l lambda) bool() bool { return true }
+
 // A complete command that already has all its arguments. Its exec ignores
 // the args parameter.
 type completeCmd struct {
@@ -90,10 +92,10 @@ type completeCmd struct {
 	args []val
 }
 
-func (c *completeCmd) exec(args []val, ctx *context) int {
+func (c *completeCmd) exec(args []val, ctx *context) val {
 	return c.cmd.exec(c.args, ctx)
 }
 
 type cmd interface {
-	exec(args []val, ctx *context) int
+	exec(args []val, ctx *context) val
 }

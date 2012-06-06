@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"math/big"
 	"os/exec"
+	"strconv"
 	"syscall"
 )
 
 type val interface {
 	eval(ctx *context) val
+	bool() bool
 	String() string
 }
 
@@ -20,6 +21,8 @@ func (v nilVal) eval(ctx *context) val {
 
 func (v nilVal) String() string { return "" }
 
+func (v nilVal) bool() bool { return true }
+
 type localVar string
 
 func (v localVar) eval(ctx *context) val { return ctx.lookupLocal(string(v[1:])) }
@@ -28,16 +31,20 @@ func (v localVar) String() string {
 	panic("shouldn't be called")
 }
 
+func (v localVar) bool() bool {
+	panic("shouldn't be called")
+}
+
 type word string
 
-func (w word) exec(args []val, ctx *context) int {
+func (w word) exec(args []val, ctx *context) val {
 	if f := ctx.lookupFunc(string(w)); f != nil {
 		return f.exec(args, ctx)
 	}
 	path, err := exec.LookPath(string(w))
 	if err != nil {
 		fmt.Printf("%s: command not found\n", w)
-		return 127
+		return intVal(127)
 	}
 	strArgs := make([]string, len(args))
 	for i, arg := range args {
@@ -51,27 +58,26 @@ func (w word) exec(args []val, ctx *context) int {
 	if err != nil {
 		if ee, ok := err.(*exec.ExitError); ok {
 			// TODO: make portable to Plan 9
-			return ee.Sys().(syscall.WaitStatus).ExitStatus()
+			return intVal(ee.Sys().(syscall.WaitStatus).ExitStatus())
 		}
 		panic(err)
 	}
-	return 0
+	return nilVal{}
 }
 
 func (w word) eval(ctx *context) val { return w }
 
 func (w word) String() string { return string(w) }
 
-type integer struct {
-	val *big.Int
-}
+func (w word) bool() bool { return w == "" || w == "0" }
 
-type rational struct {
-	val *big.Rat
-}
+type intVal int
 
-type block struct {
-}
+func (v intVal) eval(ctx *context) val { return v }
+
+func (v intVal) String() string { return strconv.Itoa(int(v)) }
+
+func (v intVal) bool() bool { return v == 0 }
 
 type list struct {
 }
