@@ -3,6 +3,7 @@ package main
 var builtins = []*builtinCmd {
 	{"for", forCmd},
 	{"if", ifCmd},
+	{"result", resultCmd},
 	{"set", setCmd},
 }
 
@@ -51,6 +52,16 @@ func forCmd(args []val, ctx *context) val {
 		body.exec(nil, ctx)
 	}
 	return nilVal{}
+}
+
+func resultCmd(args []val, ctx *context) val {
+	switch len(args) {
+	case 0:
+		return nilVal{}
+	case 1:
+		return args[0]
+	}
+	return list(args)
 }
 
 func setCmd(args []val, ctx *context) val {

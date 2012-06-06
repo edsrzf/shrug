@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -79,5 +80,26 @@ func (v intVal) String() string { return strconv.Itoa(int(v)) }
 
 func (v intVal) bool() bool { return v == 0 }
 
-type list struct {
+type list []val
+
+func (v list) eval(ctx *context) val { return v }
+
+func (v list) String() string {
+	var buf bytes.Buffer
+	for i, el := range v {
+		if i > 0 {
+			buf.WriteByte(' ')
+		}
+		buf.WriteString(el.String())
+	}
+	return buf.String()
+}
+
+func (v list) bool() bool {
+	for _, el := range v {
+		if !el.bool() {
+			return false
+		}
+	}
+	return true
 }
