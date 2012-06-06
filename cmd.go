@@ -13,8 +13,8 @@ type context struct {
 func newCtx() *context {
 	var ctx context
 	top := map[string]val{}
-	for name, f := range builtins {
-		top["fn-" + name] = f
+	for _, c := range builtins {
+		top["fn-" + c.name] = c
 	}
 	ctx.vars = []map[string]val{top}
 	return &ctx
@@ -45,18 +45,21 @@ func (e *context) lookupFunc(name string) cmd {
 	return nil
 }
 
-type builtinCmd func(args []val, ctx *context) int
-
-func (c builtinCmd) exec(args []val, ctx *context) int {
-	return c(args, ctx)
+type builtinCmd struct {
+	name string
+	f    func(args []val, ctx *context) int
 }
 
-func (c builtinCmd) eval(ctx *context) val {
-	return nilVal{}
+func (c *builtinCmd) exec(args []val, ctx *context) int {
+	return c.f(args, ctx)
 }
 
-func (c builtinCmd) String() string {
-	return ""
+func (c *builtinCmd) eval(ctx *context) val {
+	return c
+}
+
+func (c *builtinCmd) String() string {
+	return "$&" + c.name
 }
 
 type lambda struct {

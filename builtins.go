@@ -1,9 +1,9 @@
 package main
 
-var builtins = map[string]builtinCmd{
-	"for": forCmd,
-	"if": ifCmd,
-	"set": setCmd,
+var builtins = []*builtinCmd {
+	{"for", forCmd},
+	{"if", ifCmd},
+	{"set", setCmd},
 }
 
 func ifCmd(args []val, ctx *context) int {
