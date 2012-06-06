@@ -26,6 +26,10 @@ var basicTests = []struct{
 	{"result", "", nilVal{}},
 	{"result 1", "", word("1")},
 	{"result 1 2 3", "", list{word("1"), word("2"), word("3")}},
+	{"and", "", nilVal{}},
+	{"and {echo hi}", "hi\n", intVal(0)},
+	{"and {result 0} {echo hi}", "hi\n", intVal(0)},
+	{"and {result hi} {echo hi}", "", word("hi")},
 }
 
 func TestCommand(t *testing.T) {

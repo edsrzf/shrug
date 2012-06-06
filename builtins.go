@@ -1,10 +1,24 @@
 package main
 
 var builtins = []*builtinCmd {
+	{"and", andCmd},
 	{"for", forCmd},
 	{"if", ifCmd},
 	{"result", resultCmd},
 	{"set", setCmd},
+}
+
+func andCmd(args []val, ctx *context) val {
+	var ret val = nilVal{}
+	for _, arg := range args {
+		c, ok := arg.(cmd)
+		if !ok {
+		}
+		if ret = c.exec(nil, ctx); !ret.bool() {
+			break
+		}
+	}
+	return ret
 }
 
 func ifCmd(args []val, ctx *context) val {
