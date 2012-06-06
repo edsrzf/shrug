@@ -33,7 +33,7 @@ func TestCommand(t *testing.T) {
 		ctx := newCtx()
 		ctx.stdout = &buf
 		for _, cmd := range cmds {
-			cmd.exec(ctx)
+			cmd.exec(nil, ctx)
 		}
 		if output := buf.String(); output != test.output {
 			t.Errorf("expected\n%q\ngot\n%q", test.output, output)

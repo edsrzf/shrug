@@ -60,13 +60,13 @@ func (c builtinCmd) String() string {
 }
 
 type lambda struct {
-	cmds []*command
+	cmds []*completeCmd
 }
 
 func (l lambda) exec(args []val, ctx *context) int {
 	ret := 0
 	for _, cmd := range l.cmds {
-		ret = cmd.exec(ctx)
+		ret = cmd.exec(nil, ctx)
 	}
 	return ret
 }
@@ -80,12 +80,14 @@ func (l lambda) String() string {
 	return ""
 }
 
-type command struct {
+// A complete command that already has all its arguments. Its exec ignores
+// the args parameter.
+type completeCmd struct {
 	cmd cmd
 	args []val
 }
 
-func (c *command) exec(ctx *context) int {
+func (c *completeCmd) exec(args []val, ctx *context) int {
 	return c.cmd.exec(c.args, ctx)
 }
 

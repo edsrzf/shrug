@@ -152,7 +152,7 @@ func (p *parser) parseLambda() lambda {
 	return lambda{cmds}
 }
 
-func (p *parser) parseCommand() *command {
+func (p *parser) parseCommand() *completeCmd {
 	var c cmd
 	switch p.tok {
 	case atomTok:
@@ -183,11 +183,11 @@ func (p *parser) parseCommand() *command {
 	if p.tok != '}' {
 		p.expect(semiTok)
 	}
-	return &command{c, args}
+	return &completeCmd{c, args}
 }
 
-func (p *parser) parseCommandList() []*command {
-	commands := make([]*command, 0, 1)
+func (p *parser) parseCommandList() []*completeCmd {
+	commands := make([]*completeCmd, 0, 1)
 	for p.tok != eofTok && p.tok != '}' {
 		commands = append(commands, p.parseCommand())
 	}
