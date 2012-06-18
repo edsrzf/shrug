@@ -14,12 +14,14 @@ func main() {
 	ctx.stdout = os.Stdout
 	ctx.stderr = os.Stderr
 
-	l := fineline.NewLineReader()
+	completer := &fineline.FilenameCompleter{"/"}
+
+	l := fineline.NewLineReader(completer)
 	l.Prompt = "$ "
 	l.SetMaxHistory(10)
 
 	for {
-		str, err := l.Read(nil)
+		str, err := l.Read()
 		if err != nil {
 			if err != io.EOF {
 				fmt.Println("error", err)
