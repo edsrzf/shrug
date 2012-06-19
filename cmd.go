@@ -5,18 +5,18 @@ import (
 )
 
 type context struct {
-	vars []map[string]val
+	vars []map[string]termVal
 	stdin io.Reader
 	stdout, stderr io.Writer
 }
 
 func newCtx() *context {
 	var ctx context
-	top := map[string]val{}
+	top := map[string]termVal{}
 	for _, c := range builtins {
 		top["fn-" + c.name] = c
 	}
-	ctx.vars = []map[string]val{top}
+	ctx.vars = []map[string]termVal{top}
 	return &ctx
 }
 
@@ -25,11 +25,11 @@ func (c *context) copy() *context {
 	return &ctx
 }
 
-func (e *context) set(name string, v val) {
+func (e *context) set(name string, v termVal) {
 	e.vars[len(e.vars)-1][name] = v
 }
 
-func (e *context) lookupLocal(name string) val {
+func (e *context) lookupLocal(name string) termVal {
 	for i := len(e.vars) - 1; i >= 0; i-- {
 		if v, ok := e.vars[i][name]; ok {
 			return v
@@ -52,14 +52,14 @@ func (e *context) lookupFunc(name string) cmd {
 
 type builtinCmd struct {
 	name string
-	f    func(args []val, ctx *context) val
+	f    func(args []termVal, ctx *context) termVal
 }
 
-func (c *builtinCmd) exec(args []val, ctx *context) val {
+func (c *builtinCmd) exec(args []termVal, ctx *context) termVal {
 	return c.f(args, ctx)
 }
 
-func (c *builtinCmd) eval(ctx *context) val {
+func (c *builtinCmd) eval(ctx *context) termVal {
 	return c
 }
 
@@ -71,15 +71,15 @@ type lambda struct {
 	cmds []*completeCmd
 }
 
-func (l lambda) exec(args []val, ctx *context) val {
-	var ret val = nilVal{}
+func (l lambda) exec(args []termVal, ctx *context) termVal {
+	var ret termVal = nilVal{}
 	for _, cmd := range l.cmds {
 		ret = cmd.exec(nil, ctx)
 	}
 	return ret
 }
 
-func (l lambda) eval(ctx *context) val {
+func (l lambda) eval(ctx *context) termVal {
 	return l
 }
 
@@ -97,10 +97,14 @@ type completeCmd struct {
 	args []val
 }
 
-func (c *completeCmd) exec(args []val, ctx *context) val {
-	return c.cmd.exec(c.args, ctx)
+func (c *completeCmd) exec(args []termVal, ctx *context) termVal {
+	termArgs := make([]termVal, 0, len(c.args))
+	for _, val := range c.args {
+		termArgs = append(termArgs, val.eval(ctx))
+	}
+	return c.cmd.exec(termArgs, ctx)
 }
 
 type cmd interface {
-	exec(args []val, ctx *context) val
+	exec(args []termVal, ctx *context) termVal
 }
