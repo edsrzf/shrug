@@ -20,6 +20,11 @@ func newCtx() *context {
 	return &ctx
 }
 
+func (c *context) copy() *context {
+	ctx := *c
+	return &ctx
+}
+
 func (e *context) set(name string, v val) {
 	e.vars[len(e.vars)-1][name] = v
 }

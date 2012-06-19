@@ -1,9 +1,14 @@
 package main
 
+import (
+	"os"
+)
+
 var builtins = []*builtinCmd {
 	{"and", andCmd},
 	{"for", forCmd},
 	{"if", ifCmd},
+	{"pipe", pipeCmd},
 	{"result", resultCmd},
 	{"set", setCmd},
 }
@@ -66,6 +71,43 @@ func forCmd(args []val, ctx *context) val {
 		body.exec(nil, ctx)
 	}
 	return nilVal{}
+}
+
+func pipeCmd(args []val, ctx *context) val {
+	stdin := ctx.stdin
+	if len(args) == 0 {
+		return nilVal{}
+	}
+	if len(args) > 1 {
+		for _, arg := range args[:len(args)-1] {
+			pipeR, pipeW, err := os.Pipe()
+			if err != nil {
+				continue
+			}
+			cmdArg, ok := arg.(cmd)
+			if !ok {
+				continue
+			}
+			subCtx := ctx.copy()
+			subCtx.stdin = stdin
+			subCtx.stdout = pipeW
+			go func() {
+				cmdArg.exec(nil, subCtx)
+				pipeW.Close()
+			}()
+			stdin = pipeR
+		}
+	}
+	cmdArg, ok := args[len(args)-1].(cmd)
+	if !ok {
+		return nilVal{}
+	}
+	oldStdin := ctx.stdin
+	ctx.stdin = stdin
+	defer func() {
+		ctx.stdin = oldStdin
+	}()
+	return cmdArg.exec(nil, ctx)
 }
 
 func resultCmd(args []val, ctx *context) val {
