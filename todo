@@ -1,0 +1,3 @@
+- Builtins: pipe, create, append
+- Concat
+- Syntactic sugar (|, ||, &&, >, >>)
