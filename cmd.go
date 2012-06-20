@@ -100,7 +100,12 @@ type completeCmd struct {
 func (c *completeCmd) exec(args []termVal, ctx *context) termVal {
 	termArgs := make([]termVal, 0, len(c.args))
 	for _, val := range c.args {
-		termArgs = append(termArgs, val.eval(ctx))
+		termVal := val.eval(ctx)
+		if listVal, ok := termVal.(list); ok {
+			termArgs = append(termArgs, listVal...)
+		} else {
+			termArgs = append(termArgs, termVal)
+		}
 	}
 	return c.cmd.exec(termArgs, ctx)
 }

@@ -21,6 +21,7 @@ var basicTests = []struct{
 	{"if {test 0} {echo true}", "true\n", intVal(0)},
 	{"if {test} {echo true} {echo false}", "false\n", intVal(0)},
 	{"if {test} {echo true}", "", intVal(0)},
+	{"set v {test 0} {echo true} {echo false}; if $v", "true\n", intVal(0)},
 	{"for var {echo hi}", "", intVal(0)},
 	{"for letter a b c {echo $letter}", "a\nb\nc\n", intVal(0)},
 	{"result", "", nilVal{}},

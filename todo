@@ -1,6 +1,5 @@
 - Builtins: create, append
 - Blocks with arguments
-- Don't assume 1 variable argument == 1 final argument. The variable could be a list.
 - Concat
 - Syntactic sugar (|, ||, &&, >, >>)
 - Modules

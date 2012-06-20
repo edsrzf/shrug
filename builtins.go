@@ -110,7 +110,7 @@ func pipeCmd(args []termVal, ctx *context) termVal {
 	return cmdArg.exec(nil, ctx)
 }
 
-func resultCmd(args []termVal, ctx *context) termVal {
+func argsToVal(args []termVal) termVal {
 	switch len(args) {
 	case 0:
 		return nilVal{}
@@ -118,6 +118,10 @@ func resultCmd(args []termVal, ctx *context) termVal {
 		return args[0]
 	}
 	return list(args)
+}
+
+func resultCmd(args []termVal, ctx *context) termVal {
+	return argsToVal(args)
 }
 
 func setCmd(args []termVal, ctx *context) termVal {
@@ -130,6 +134,6 @@ func setCmd(args []termVal, ctx *context) termVal {
 		ctx.stderr.Write([]byte("set: invalid variable name"))
 		return intVal(1)
 	}
-	ctx.set(string(varname), args[1])
+	ctx.set(string(varname), argsToVal(args[1:]))
 	return nilVal{}
 }
