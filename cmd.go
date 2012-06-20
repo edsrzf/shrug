@@ -67,28 +67,28 @@ func (c *builtinCmd) String() string { return "$&" + c.name }
 
 func (c *builtinCmd) bool() bool { return true }
 
-type lambda struct {
+type block struct {
 	cmds []*completeCmd
 }
 
-func (l lambda) exec(args []termVal, ctx *context) termVal {
+func (b block) exec(args []termVal, ctx *context) termVal {
 	var ret termVal = nilVal{}
-	for _, cmd := range l.cmds {
+	for _, cmd := range b.cmds {
 		ret = cmd.exec(nil, ctx)
 	}
 	return ret
 }
 
-func (l lambda) eval(ctx *context) termVal {
-	return l
+func (b block) eval(ctx *context) termVal {
+	return b
 }
 
-func (l lambda) String() string {
+func (b block) String() string {
 	// TODO
 	return ""
 }
 
-func (l lambda) bool() bool { return true }
+func (b block) bool() bool { return true }
 
 // A complete command that already has all its arguments. Its exec ignores
 // the args parameter.

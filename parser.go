@@ -145,11 +145,11 @@ func (p *parser) lex() {
 	p.lit = string(p.src[offset:p.offset])
 }
 
-func (p *parser) parseLambda() lambda {
+func (p *parser) parseBlock() block {
 	p.lex()
 	cmds := p.parseCommandList()
 	p.expect('}')
-	return lambda{cmds}
+	return block{cmds}
 }
 
 func (p *parser) parseCommand() *completeCmd {
@@ -159,7 +159,7 @@ func (p *parser) parseCommand() *completeCmd {
 		c = word(p.lit)
 		p.lex()
 	case '{':
-		c = p.parseLambda()
+		c = p.parseBlock()
 	default:
 		p.expect('{', atomTok)
 	}
@@ -175,7 +175,7 @@ func (p *parser) parseCommand() *completeCmd {
 			args = append(args, localVar(p.lit))
 			p.lex()
 		case '{':
-			 args = append(args, p.parseLambda())
+			 args = append(args, p.parseBlock())
 		default:
 			 break loop
 		}
