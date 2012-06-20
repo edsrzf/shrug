@@ -13,8 +13,8 @@ var builtins = []*builtinCmd {
 	{"set", setCmd},
 }
 
-func andCmd(args []termVal, ctx *context) termVal {
-	var ret termVal = nilVal{}
+func andCmd(args []val, ctx *context) val {
+	var ret val = nilVal{}
 	for _, arg := range args {
 		c, ok := arg.(cmd)
 		if !ok {
@@ -26,7 +26,7 @@ func andCmd(args []termVal, ctx *context) termVal {
 	return ret
 }
 
-func ifCmd(args []termVal, ctx *context) termVal {
+func ifCmd(args []val, ctx *context) val {
 	if len(args) < 1 {
 		ctx.stderr.Write([]byte("if: usage: if cond [ iftrue ] [ iffalse ]"))
 		return intVal(1)
@@ -51,7 +51,7 @@ func ifCmd(args []termVal, ctx *context) termVal {
 	return nilVal{}
 }
 
-func forCmd(args []termVal, ctx *context) termVal {
+func forCmd(args []val, ctx *context) val {
 	if len(args) < 2 {
 		ctx.stderr.Write([]byte("for: usage: for variable [ list ... ] body"))
 		return intVal(1)
@@ -73,7 +73,7 @@ func forCmd(args []termVal, ctx *context) termVal {
 	return nilVal{}
 }
 
-func pipeCmd(args []termVal, ctx *context) termVal {
+func pipeCmd(args []val, ctx *context) val {
 	stdin := ctx.stdin
 	if len(args) == 0 {
 		return nilVal{}
@@ -110,7 +110,7 @@ func pipeCmd(args []termVal, ctx *context) termVal {
 	return cmdArg.exec(nil, ctx)
 }
 
-func argsToVal(args []termVal) termVal {
+func argsToVal(args []val) val {
 	switch len(args) {
 	case 0:
 		return nilVal{}
@@ -120,11 +120,11 @@ func argsToVal(args []termVal) termVal {
 	return list(args)
 }
 
-func resultCmd(args []termVal, ctx *context) termVal {
+func resultCmd(args []val, ctx *context) val {
 	return argsToVal(args)
 }
 
-func setCmd(args []termVal, ctx *context) termVal {
+func setCmd(args []val, ctx *context) val {
 	if len(args) < 2 {
 		ctx.stderr.Write([]byte("set: usage: set variable value"))
 		return intVal(1)

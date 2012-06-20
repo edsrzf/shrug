@@ -5,18 +5,18 @@ import (
 )
 
 type context struct {
-	vars []map[string]termVal
+	vars []map[string]val
 	stdin io.Reader
 	stdout, stderr io.Writer
 }
 
 func newCtx() *context {
 	var ctx context
-	top := map[string]termVal{}
+	top := map[string]val{}
 	for _, c := range builtins {
 		top["fn-" + c.name] = c
 	}
-	ctx.vars = []map[string]termVal{top}
+	ctx.vars = []map[string]val{top}
 	return &ctx
 }
 
@@ -25,11 +25,11 @@ func (c *context) copy() *context {
 	return &ctx
 }
 
-func (e *context) set(name string, v termVal) {
+func (e *context) set(name string, v val) {
 	e.vars[len(e.vars)-1][name] = v
 }
 
-func (e *context) lookupLocal(name string) termVal {
+func (e *context) lookupLocal(name string) val {
 	for i := len(e.vars) - 1; i >= 0; i-- {
 		if v, ok := e.vars[i][name]; ok {
 			return v
@@ -52,14 +52,14 @@ func (e *context) lookupFunc(name string) cmd {
 
 type builtinCmd struct {
 	name string
-	f    func(args []termVal, ctx *context) termVal
+	f    func(args []val, ctx *context) val
 }
 
-func (c *builtinCmd) exec(args []termVal, ctx *context) termVal {
+func (c *builtinCmd) exec(args []val, ctx *context) val {
 	return c.f(args, ctx)
 }
 
-func (c *builtinCmd) eval(ctx *context) termVal {
+func (c *builtinCmd) eval(ctx *context) val {
 	return c
 }
 
@@ -71,15 +71,15 @@ type block struct {
 	cmds []*completeCmd
 }
 
-func (b block) exec(args []termVal, ctx *context) termVal {
-	var ret termVal = nilVal{}
+func (b block) exec(args []val, ctx *context) val {
+	var ret val = nilVal{}
 	for _, cmd := range b.cmds {
 		ret = cmd.exec(nil, ctx)
 	}
 	return ret
 }
 
-func (b block) eval(ctx *context) termVal {
+func (b block) eval(ctx *context) val {
 	return b
 }
 
@@ -94,22 +94,22 @@ func (b block) bool() bool { return true }
 // the args parameter.
 type completeCmd struct {
 	cmd cmd
-	args []val
+	args []expr
 }
 
-func (c *completeCmd) exec(args []termVal, ctx *context) termVal {
-	termArgs := make([]termVal, 0, len(c.args))
-	for _, val := range c.args {
-		termVal := val.eval(ctx)
-		if listVal, ok := termVal.(list); ok {
+func (c *completeCmd) exec(args []val, ctx *context) val {
+	termArgs := make([]val, 0, len(c.args))
+	for _, expr := range c.args {
+		val := expr.eval(ctx)
+		if listVal, ok := val.(list); ok {
 			termArgs = append(termArgs, listVal...)
 		} else {
-			termArgs = append(termArgs, termVal)
+			termArgs = append(termArgs, val)
 		}
 	}
 	return c.cmd.exec(termArgs, ctx)
 }
 
 type cmd interface {
-	exec(args []termVal, ctx *context) termVal
+	exec(args []val, ctx *context) val
 }

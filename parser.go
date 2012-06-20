@@ -164,7 +164,7 @@ func (p *parser) parseCommand() *completeCmd {
 		p.expect('{', atomTok)
 	}
 
-	var args []val
+	var args []expr
 	loop:
 	for {
 		switch p.tok {
