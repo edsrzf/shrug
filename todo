@@ -1,5 +1,6 @@
 - Builtins: create, append
 - Blocks with arguments
+- Have lexer balance parentheses and braces, inserting semi-colons appropriately
 - Concat
 - Syntactic sugar (|, ||, &&, >, >>)
 - Modules
