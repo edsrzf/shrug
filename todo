@@ -2,7 +2,6 @@
 - Shell expansion
 - Single quotes
 - Blocks with arguments
-- Have lexer balance parentheses and braces, inserting semi-colons appropriately
 - append builtin
 - Concat (, instead of ^)
 - Syntactic sugar (|, ||, &&, >, >>)

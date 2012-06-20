@@ -25,29 +25,37 @@ func (c *context) copy() *context {
 	return &ctx
 }
 
-func (e *context) set(name string, v val) {
-	e.vars[len(e.vars)-1][name] = v
+func (c *context) set(name string, v val) {
+	c.vars[len(c.vars)-1][name] = v
 }
 
-func (e *context) lookupLocal(name string) val {
-	for i := len(e.vars) - 1; i >= 0; i-- {
-		if v, ok := e.vars[i][name]; ok {
+func (c *context) lookupLocal(name string) val {
+	for i := len(c.vars) - 1; i >= 0; i-- {
+		if v, ok := c.vars[i][name]; ok {
 			return v
 		}
 	}
 	return nilVal{}
 }
 
-func (e *context) lookupFunc(name string) cmd {
+func (c *context) lookupFunc(name string) cmd {
 	name = "fn-" + name
-	for i := len(e.vars) - 1; i >= 0; i-- {
-		if v, ok := e.vars[i][name]; ok {
+	for i := len(c.vars) - 1; i >= 0; i-- {
+		if v, ok := c.vars[i][name]; ok {
 			if f, ok := v.(cmd); ok {
 				return f
 			}
 		}
 	}
 	return nil
+}
+
+func (c *context) pushScope() {
+	c.vars = append(c.vars, map[string]val{})
+}
+
+func (c *context) popScope() {
+	c.vars = c.vars[:len(c.vars)-1]
 }
 
 type builtinCmd struct {
@@ -72,6 +80,9 @@ type block struct {
 }
 
 func (b block) exec(args []val, ctx *context) val {
+	ctx.pushScope()
+	defer ctx.popScope()
+
 	var ret val = nilVal{}
 	for _, cmd := range b.cmds {
 		ret = cmd.exec(nil, ctx)

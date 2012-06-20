@@ -16,7 +16,6 @@ var basicTests = []struct{
 	{"set var hi", "", nilVal{}},
 	{"set var hi; echo $var", "hi\n", intVal(0)},
 	{"{echo hi}", "hi\n", intVal(0)},
-	{"{\necho hi}", "hi\n", intVal(0)},
 	{"if {test 0} {echo true} {echo false}", "true\n", intVal(0)},
 	{"if {test 0} {echo true}", "true\n", intVal(0)},
 	{"if {test} {echo true} {echo false}", "false\n", intVal(0)},
@@ -31,6 +30,8 @@ var basicTests = []struct{
 	{"and {echo hi}", "hi\n", intVal(0)},
 	{"and {result 0} {echo hi}", "hi\n", intVal(0)},
 	{"and {result hi} {echo hi}", "", word("hi")},
+	{"{\necho hi}", "hi\n", intVal(0)},
+	{"if (\n{test 0}\n{echo true}\n{echo false}\n)", "true\n", intVal(0)},
 }
 
 func TestCommand(t *testing.T) {

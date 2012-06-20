@@ -31,6 +31,8 @@ type parser struct {
 	mode lexMode
 	src []byte
 	offset int
+	// for balancing parens and braces
+	parens []rune
 	insertSemi bool
 }
 
@@ -47,6 +49,32 @@ func newParser(src string) *parser {
 	p.offset = 0
 	p.lex()
 	return &p
+}
+
+func (p *parser) push(c rune) {
+	p.parens = append(p.parens, c)
+}
+
+func (p *parser) pop(c rune) {
+	if len(p.parens) <= 0 {
+		p.errorf("unbalanced braces or parentheses\n")
+	}
+	top := p.top()
+	expected := ')'
+	if top == '{' {
+		expected = '}'
+	}
+	if c != expected {
+		p.errorf("expected %c\n", expected)
+	}
+	p.parens = p.parens[:len(p.parens)-1]
+}
+
+func (p *parser) top() rune {
+	if len(p.parens) > 0 {
+		return p.parens[len(p.parens)-1]
+	}
+	return 0
 }
 
 func (p *parser) errorf(f string, args ...interface{}) {
@@ -85,7 +113,8 @@ func (p *parser) next() {
 }
 
 func (p *parser) skipSpace() {
-	for p.ch == ' ' || p.ch == '\t' || !p.insertSemi && p.ch == '\n' {
+	insertSemi := p.insertSemi && p.top() != '('
+	for p.ch == ' ' || p.ch == '\t' || !insertSemi && p.ch == '\n' {
 		p.next()
 	}
 }
@@ -97,7 +126,7 @@ func (p *parser) readAtom() {
 }
 
 func special(c rune) bool {
-	return strings.IndexRune(";{}", c) >= 0
+	return strings.IndexRune(";{}()", c) >= 0
 }
 
 func (p *parser) lex() {
@@ -130,9 +159,14 @@ func (p *parser) lex() {
 	default:
 		if special(p.ch) {
 			p.tok = token(p.ch)
-			if p.ch == '{' {
+			switch p.ch {
+			case '{', '(':
+				p.push(p.ch)
 				p.insertSemi = false
-			} else {
+			case '}', ')':
+				p.pop(p.ch)
+				fallthrough
+			default:
 				p.insertSemi = true
 			}
 			p.next()
@@ -145,11 +179,40 @@ func (p *parser) lex() {
 	p.lit = string(p.src[offset:p.offset])
 }
 
+func (p *parser) parseParenExpr() []expr {
+	p.lex()
+	args := p.parseArgList()
+	p.expect(')')
+	return args
+}
+
 func (p *parser) parseBlock() block {
 	p.lex()
 	cmds := p.parseCommandList()
 	p.expect('}')
 	return block{cmds}
+}
+
+func (p *parser) parseArgList() []expr {
+	var args []expr
+	loop:
+	for {
+		switch p.tok {
+		case atomTok:
+			args = append(args, word(p.lit))
+			p.lex()
+		case varTok:
+			args = append(args, localVar(p.lit))
+			p.lex()
+		case '(':
+			args = append(args, p.parseParenExpr()...)
+		case '{':
+			 args = append(args, p.parseBlock())
+		default:
+			 break loop
+		}
+	}
+	return args
 }
 
 func (p *parser) parseCommand() *completeCmd {
@@ -164,22 +227,7 @@ func (p *parser) parseCommand() *completeCmd {
 		p.expect('{', atomTok)
 	}
 
-	var args []expr
-	loop:
-	for {
-		switch p.tok {
-		case atomTok:
-			args = append(args, word(p.lit))
-			p.lex()
-		case varTok:
-			args = append(args, localVar(p.lit))
-			p.lex()
-		case '{':
-			 args = append(args, p.parseBlock())
-		default:
-			 break loop
-		}
-	}
+	args := p.parseArgList()
 	if p.tok != '}' {
 		p.expect(semiTok)
 	}
