@@ -4,8 +4,9 @@ import (
 	"os"
 )
 
-var builtins = []*builtinCmd {
+var builtins = []*builtinCmd{
 	{"and", andCmd},
+	{"create", createCmd},
 	{"for", forCmd},
 	{"if", ifCmd},
 	{"pipe", pipeCmd},
@@ -24,6 +25,46 @@ func andCmd(args []val, ctx *context) val {
 		}
 	}
 	return ret
+}
+
+func createCmd(args []val, ctx *context) val {
+	usage := func() val {
+		ctx.stderr.Write([]byte("create: usage: create fd filename cmd"))
+		return intVal(1)
+	}
+	if len(args) != 3 {
+		return usage()
+	}
+	cmdArg, ok := args[2].(cmd)
+	if !ok {
+		return usage()
+	}
+	file, err := os.Create(args[1].String())
+	if err != nil {
+		ctx.stderr.Write([]byte("create: unable to create file"))
+		return intVal(1)
+	}
+	defer file.Close()
+
+	switch args[0].String() {
+	case "1":
+		oldStdout := ctx.stdout
+		ctx.stdout = file
+		defer func() {
+			ctx.stdout = oldStdout
+		}()
+	case "2":
+		oldStderr := ctx.stdout
+		ctx.stderr = file
+		defer func() {
+			ctx.stdout = oldStderr
+		}()
+	default:
+		ctx.stderr.Write([]byte("create: can only redirect fds 1 and 2"))
+		return intVal(1)
+	}
+
+	return cmdArg.exec(nil, ctx)
 }
 
 func ifCmd(args []val, ctx *context) val {
@@ -66,7 +107,7 @@ func forCmd(args []val, ctx *context) val {
 		ctx.stderr.Write([]byte("for: invalid body"))
 		return intVal(1)
 	}
-	for _, item := range args[1:len(args)-1] {
+	for _, item := range args[1 : len(args)-1] {
 		ctx.set(string(varname), item)
 		body.exec(nil, ctx)
 	}
