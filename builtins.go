@@ -11,6 +11,7 @@ var builtins = []*builtinCmd{
 	{"create", createCmd},
 	{"for", forCmd},
 	{"if", ifCmd},
+	{"let", letCmd},
 	{"pipe", pipeCmd},
 	{"result", resultCmd},
 	{"set", setCmd},
@@ -128,6 +129,20 @@ func forCmd(args []val, ctx *context) val {
 		ctx.set(string(varname), item)
 		body.exec(nil, ctx)
 	}
+	return nilVal{}
+}
+
+func letCmd(args []val, ctx *context) val {
+	if len(args) < 2 {
+		ctx.stderr.Write([]byte("let: usage: let variable value"))
+		return intVal(1)
+	}
+	varname, ok := args[0].(word)
+	if !ok {
+		ctx.stderr.Write([]byte("let: invalid variable name"))
+		return intVal(1)
+	}
+	ctx.let(string(varname), argsToVal(args[1:]))
 	return nilVal{}
 }
 

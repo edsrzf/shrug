@@ -25,8 +25,18 @@ func (c *context) copy() *context {
 	return &ctx
 }
 
-func (c *context) set(name string, v val) {
+func (c *context) let(name string, v val) {
 	c.vars[len(c.vars)-1][name] = v
+}
+
+func (c *context) set(name string, v val) {
+	for i := len(c.vars) - 1; i >= 0; i-- {
+		if v, ok := c.vars[i][name]; ok {
+			c.vars[i][name] = v
+			return
+		}
+	}
+	c.vars[0][name] = v
 }
 
 func (c *context) lookupLocal(name string) val {
