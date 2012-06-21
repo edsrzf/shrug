@@ -1,11 +1,13 @@
 package main
 
 import (
+	"fmt"
 	"os"
 )
 
 var builtins = []*builtinCmd{
 	{"and", andCmd},
+	{"cd", cdCmd},
 	{"create", createCmd},
 	{"for", forCmd},
 	{"if", ifCmd},
@@ -25,6 +27,21 @@ func andCmd(args []val, ctx *context) val {
 		}
 	}
 	return ret
+}
+
+func cdCmd(args []val, ctx *context) val {
+	var dir string
+	if len(args) == 0 {
+		dir = os.Getenv("HOME")
+	} else {
+		dir = args[0].String()
+	}
+	err := os.Chdir(dir)
+	if err != nil {
+		fmt.Fprintln(ctx.stderr, "cd:", err)
+		return intVal(1)
+	}
+	return intVal(0)
 }
 
 func createCmd(args []val, ctx *context) val {
