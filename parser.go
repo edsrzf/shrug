@@ -98,7 +98,7 @@ func (p *parser) expect(toks ...token) {
 		}
 		buf.WriteString(" or ")
 		buf.WriteString(string(toks[len(toks)-1]))
-		p.errorf("expected %v, got %q\n", buf, p.tok)
+		p.errorf("expected %q, got %q\n", buf.String(), p.tok)
 	}
 }
 
@@ -120,7 +120,7 @@ func (p *parser) skipSpace() {
 }
 
 func (p *parser) readAtom() {
-	for strings.IndexRune("\n \t#;${}", p.ch) < 0 {
+	for strings.IndexRune("\n \t#;${}()|", p.ch) < 0 {
 		p.next()
 	}
 }
@@ -133,12 +133,11 @@ func (p *parser) readQuote() string {
 	}
 	lit := string(p.src[offset:p.offset])
 	p.next()
-	fmt.Println("lit is", lit)
 	return lit
 }
 
 func special(c rune) bool {
-	return strings.IndexRune(";{}()", c) >= 0
+	return strings.IndexRune(";{}()|", c) >= 0
 }
 
 func (p *parser) lex() {
@@ -178,6 +177,8 @@ func (p *parser) lex() {
 			switch p.ch {
 			case '{', '(':
 				p.push(p.ch)
+				fallthrough
+			case '|':
 				p.insertSemi = false
 			case '}', ')':
 				p.pop(p.ch)
@@ -202,10 +203,28 @@ func (p *parser) parseParenExpr() []expr {
 	return args
 }
 
-func (p *parser) parseBlock() block {
+func (p *parser) parseBlock() cmd {
 	p.lex()
+	var argNames []string
+	if p.tok == '|' {
+		p.lex()
+		for {
+			if p.tok == atomTok {
+				argNames = append(argNames, p.lit)
+				p.lex()
+			} else if p.tok == '|' {
+				p.lex()
+				break
+			} else {
+				p.expect('|', atomTok)
+			}
+		}
+	}
 	cmds := p.parseCommandList()
 	p.expect('}')
+	if len(argNames) > 0 {
+		return argBlock{argNames, cmds}
+	}
 	return block{cmds}
 }
 
@@ -223,7 +242,7 @@ func (p *parser) parseArgList() []expr {
 		case '(':
 			args = append(args, p.parseParenExpr()...)
 		case '{':
-			 args = append(args, p.parseBlock())
+			 args = append(args, p.parseBlock().(expr))
 		default:
 			 break loop
 		}

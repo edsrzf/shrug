@@ -100,9 +100,7 @@ func (b block) exec(args []val, ctx *context) val {
 	return ret
 }
 
-func (b block) eval(ctx *context) val {
-	return b
-}
+func (b block) eval(ctx *context) val { return b }
 
 func (b block) String() string {
 	// TODO
@@ -110,6 +108,43 @@ func (b block) String() string {
 }
 
 func (b block) bool() bool { return true }
+
+type argBlock struct {
+	argNames []string
+	cmds []*completeCmd
+}
+
+func (b argBlock) exec(args []val, ctx *context) val {
+	ctx.pushScope()
+	defer ctx.popScope()
+
+	switch {
+	case len(args) == len(b.argNames):
+		for i, arg := range args {
+			ctx.let(b.argNames[i], arg)
+		}
+	case len(args) > len(b.argNames):
+		for i, argName := range b.argNames[:len(b.argNames)-1] {
+			ctx.let(argName, args[i])
+		}
+		ctx.let(b.argNames[len(b.argNames)-1], argsToVal(args[len(b.argNames):]))
+	}
+
+	var ret val = nilVal{}
+	for _, cmd := range b.cmds {
+		ret = cmd.exec(nil, ctx)
+	}
+	return ret
+}
+
+func (b argBlock) eval(ctx *context) val { return b }
+
+func (b argBlock) String() string {
+	// TODO
+	return ""
+}
+
+func (b argBlock) bool() bool { return true }
 
 // A complete command that already has all its arguments. Its exec ignores
 // the args parameter.

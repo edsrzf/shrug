@@ -112,13 +112,8 @@ func ifCmd(args []val, ctx *context) val {
 }
 
 func forCmd(args []val, ctx *context) val {
-	if len(args) < 2 {
+	if len(args) < 1 {
 		ctx.stderr.Write([]byte("for: usage: for variable [ list ... ] body"))
-		return intVal(1)
-	}
-	varname, ok := args[0].(word)
-	if !ok {
-		ctx.stderr.Write([]byte("for: invalid variable name"))
 		return intVal(1)
 	}
 	body, ok := args[len(args)-1].(cmd)
@@ -126,9 +121,8 @@ func forCmd(args []val, ctx *context) val {
 		ctx.stderr.Write([]byte("for: invalid body"))
 		return intVal(1)
 	}
-	for _, item := range args[1 : len(args)-1] {
-		ctx.set(string(varname), item)
-		body.exec(nil, ctx)
+	for i := range args[: len(args)-1] {
+		body.exec(args[i:i+1], ctx)
 	}
 	return nilVal{}
 }
