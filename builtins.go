@@ -11,6 +11,7 @@ var builtins = []*builtinCmd{
 	{"create", createCmd},
 	{"for", forCmd},
 	{"if", ifCmd},
+	{"len", lenCmd},
 	{"let", letCmd},
 	{"pipe", pipeCmd},
 	{"result", resultCmd},
@@ -130,6 +131,11 @@ func forCmd(args []val, ctx *context) val {
 		body.exec(nil, ctx)
 	}
 	return nilVal{}
+}
+
+func lenCmd(args []val, ctx *context) val {
+	fmt.Fprintln(ctx.stdout, len(args))
+	return intVal(0)
 }
 
 func letCmd(args []val, ctx *context) val {
