@@ -125,6 +125,18 @@ func (p *parser) readAtom() {
 	}
 }
 
+func (p *parser) readQuote() string {
+	p.next()
+	offset := p.offset
+	for p.ch != '\'' {
+		p.next()
+	}
+	lit := string(p.src[offset:p.offset])
+	p.next()
+	fmt.Println("lit is", lit)
+	return lit
+}
+
 func special(c rune) bool {
 	return strings.IndexRune(";{}()", c) >= 0
 }
@@ -141,6 +153,10 @@ func (p *parser) lex() {
 			break
 		}
 		p.tok = eofTok
+	case '\'':
+		p.lit = p.readQuote()
+		p.tok = atomTok
+		return
 	case '$':
 		p.next()
 		p.readAtom()

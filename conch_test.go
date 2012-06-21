@@ -12,6 +12,7 @@ var basicTests = []struct{
 }{
 	{"echo hi", "hi\n", intVal(0)},
 	{"echo hi; echo hi", "hi\nhi\n", intVal(0)},
+	{"echo 'hello,   world'", "hello,   world\n", intVal(0)},
 	{"echo $hi", "\n", intVal(0)},
 	{"set var hi", "", nilVal{}},
 	{"set var hi; echo $var", "hi\n", intVal(0)},
