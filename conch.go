@@ -30,7 +30,14 @@ func main() {
 			}
 			break
 		}
-		parser := newParser(str + "\n")
+		if str == "" {
+			fmt.Println()
+			continue
+		}
+		if str == "\n" {
+			continue
+		}
+		parser := newParser(str)
 		cmd := parser.parseCommand()
 		cmd.exec(nil, ctx)
 	}
