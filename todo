@@ -1,8 +1,6 @@
 - Shell expansion
-- Single quotes
-- Blocks with arguments
 - append builtin
-- Concat (, instead of ^)
+- Concat (maybe ',' instead of '^')
 - Syntactic sugar (|, ||, &&, >, >>)
 - Modules
 - Globbing
