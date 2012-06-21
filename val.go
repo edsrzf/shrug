@@ -59,7 +59,7 @@ func (w word) exec(args []val, ctx *context) val {
 		}
 		panic(err)
 	}
-	return nilVal{}
+	return intVal(0)
 }
 
 func (w word) eval(ctx *context) val { return w }

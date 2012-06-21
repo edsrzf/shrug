@@ -128,7 +128,9 @@ func (c *completeCmd) exec(args []val, ctx *context) val {
 			termArgs = append(termArgs, val)
 		}
 	}
-	return c.cmd.exec(termArgs, ctx)
+	ret := c.cmd.exec(termArgs, ctx)
+	ctx.set("?", ret)
+	return ret
 }
 
 type cmd interface {
