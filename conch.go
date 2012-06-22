@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/edsrzf/fineline"
 )
@@ -37,6 +38,7 @@ func main() {
 		if str == "\n" {
 			continue
 		}
+		l.AddHistory(strings.TrimRight(str, "\n"))
 		parser := newParser(str)
 		cmd := parser.parseCommand()
 		cmd.exec(nil, ctx)
